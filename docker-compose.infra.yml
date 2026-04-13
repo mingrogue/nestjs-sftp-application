@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # SFTP Server
+  sftp:
+    build: ./sftp-init
+    container_name: sftp
+    ports:
+      - "2221:22"
+    volumes:
+      - ./sftp-data:/home/user/upload
+    environment:
+      SFTP_USERS: user:password:1000:1000:upload
+    networks:
+      - sftp-network
+
+  # Zookeeper
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    mem_limit: 512m
+    environment:
+      JUTE_MAXBUFFER: 52428800  # 50MB (Default is ~4MB)
+      KAFKA_HEAP_OPTS: -Xmx128m -Xms64m
+    networks:
+      - sftp-network
+
+  # Kafka
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    mem_limit: 1g
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_HEAP_OPTS: -Xmx256m -Xms128m
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824  # 1GB
+      KAFKA_MESSAGE_MAX_BYTES: 52428800  # 50MB (Default is 1MB)
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 52428800  # 50MB (Ensure it matches message.max.bytes)
+      KAFKA_MAX_REQUEST_SIZE: 52428800  # 50MB (For producer request size)
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_NUM_PARTITIONS: 20
+    networks:
+      - sftp-network
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - sftp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka UI (optional - for monitoring)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - sftp-network
+
+volumes:
+  redis-data:
+
+networks:
+  sftp-network:
+    driver: bridge
