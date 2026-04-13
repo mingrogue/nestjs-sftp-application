@@ -41,19 +41,19 @@ cp .env.example .env
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SFTP_HOST` | SFTP server hostname | `localhost` |
-| `SFTP_PORT` | SFTP server port | `22` |
-| `SFTP_USERNAME` | SFTP username | - |
-| `SFTP_PASSWORD` | SFTP password | - |
-| `SFTP_PRIVATE_KEY_PATH` | Path to SSH private key (alternative to password) | - |
-| `SFTP_REMOTE_PATH` | Remote folder to monitor | `/upload` |
-| `SFTP_POLL_INTERVAL_MS` | Polling interval in milliseconds | `5000` |
-| `KAFKA_BROKERS` | Comma-separated list of Kafka brokers | `localhost:9092` |
-| `KAFKA_CLIENT_ID` | Kafka client identifier | `sftp-source` |
-| `KAFKA_TOPIC` | Kafka topic to publish documents | `sftp-documents` |
-| `PORT` | HTTP server port | `3000` |
+| Variable                | Description                                       | Default          |
+| ----------------------- | ------------------------------------------------- | ---------------- |
+| `SFTP_HOST`             | SFTP server hostname                              | `localhost`      |
+| `SFTP_PORT`             | SFTP server port                                  | `22`             |
+| `SFTP_USERNAME`         | SFTP username                                     | `user`           |
+| `SFTP_PASSWORD`         | SFTP password                                     | `password`       |
+| `SFTP_PRIVATE_KEY_PATH` | Path to SSH private key (alternative to password) | -                |
+| `SFTP_REMOTE_PATH`      | Remote folder to monitor                          | `/upload`        |
+| `SFTP_POLL_INTERVAL_MS` | Polling interval in milliseconds                  | `5000`           |
+| `KAFKA_BROKERS`         | Comma-separated list of Kafka brokers             | `localhost:9092` |
+| `KAFKA_CLIENT_ID`       | Kafka client identifier                           | `sftp-source`    |
+| `KAFKA_TOPIC`           | Kafka topic to publish documents                  | `sftp-documents` |
+| `PORT`                  | HTTP server port                                  | `3000`           |
 
 ## Running the Application
 
@@ -104,38 +104,40 @@ src/
 
 ## Testing with Docker
 
-Start Kafka and an SFTP server for local testing:
+Start Kafka, SFTP and Redis services for local testing:
 
 ```bash
-# Start Kafka
-docker run -d --name kafka \
-  -p 9092:9092 \
-  -e KAFKA_CFG_NODE_ID=0 \
-  -e KAFKA_CFG_PROCESS_ROLES=controller,broker \
-  -e KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
-  -e KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
-  -e KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@localhost:9093 \
-  -e KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER \
-  bitnami/kafka:latest
-
-# Start SFTP server
-docker run -d --name sftp \
-  -p 2222:22 \
-  -e SFTP_USERS=user:password:::upload \
-  atmoz/sftp:latest
-```
+docker-compose -f docker-compose.infra.yml up -d      (To run all services)
+docker-compose -f docker-compose.infra.yml down       (To stop)
 
 Then configure your `.env`:
 
 ```
-SFTP_HOST=localhost
-SFTP_PORT=2222
+
+SFTP_HOST=sftp
+SFTP_PORT=22
 SFTP_USERNAME=user
 SFTP_PASSWORD=password
+SFTP_PRIVATE_KEY_PATH=
 SFTP_REMOTE_PATH=/upload
-KAFKA_BROKERS=localhost:9092
-```
+SFTP_POLL_INTERVAL_MS=5000
+KAFKA_BROKERS=kafka:29092
+KAFKA_CLIENT_ID=sftp-source
+KAFKA_TOPIC=sftp-documents
+REDIS_HOST=redis
+REDIS_PORT=6379
+PORT=3000
+
+````
+Run `npm i`
+Run `npm run build` in the root directory. This will create the dist files which will be used by the docker-compose directly.
+
+Now to start the SFTP Application service -
+```bash
+
+docker-compose -f docker-compose.app.yml up
 
 ## License
 
 MIT
+````
