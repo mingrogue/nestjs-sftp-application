@@ -108,7 +108,6 @@ Start Kafka, SFTP and Redis services for local testing:
 
 ```bash
 docker-compose -f docker-compose.infra.yml up -d      (To run all services)
-docker-compose -f docker-compose.infra.yml down       (To stop)
 
 Then configure your `.env` -
 
@@ -137,7 +136,12 @@ Now to start the SFTP Application service -
 
 docker-compose -f docker-compose.app.yml up
 
-## License
 
-MIT
+
+
+Cleanup - 
+
+```bash
+docker-compose -f docker-compose.app.yml down --remove-orphans
+docker-compose -f docker-compose.infra.yml down --remove-orphans
 ```

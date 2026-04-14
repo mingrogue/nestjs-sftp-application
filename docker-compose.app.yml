@@ -14,7 +14,7 @@ services:
       - ./.env
     command: node dist/main.js
     networks:
-      - sftp-concurrency_sftp-network
+      - nestjs-sftp-application_sftp-network
     restart: unless-stopped
 
   # SFTP Source App - Replica 2
@@ -30,7 +30,7 @@ services:
       - ./.env
     command: node dist/main.js
     networks:
-      - sftp-concurrency_sftp-network
+      - nestjs-sftp-application_sftp-network
     restart: unless-stopped
 
   # SFTP Source App - Replica 3
@@ -46,9 +46,9 @@ services:
       - ./.env
     command: node dist/main.js
     networks:
-      - sftp-concurrency_sftp-network
+      - nestjs-sftp-application_sftp-network
     restart: unless-stopped
 
 networks:
-  sftp-concurrency_sftp-network:
+  nestjs-sftp-application_sftp-network:
     external: true
