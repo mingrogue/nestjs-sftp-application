@@ -110,9 +110,7 @@ Start Kafka, SFTP and Redis services for local testing:
 docker-compose -f docker-compose.infra.yml up -d      (To run all services)
 docker-compose -f docker-compose.infra.yml down       (To stop)
 
-Then configure your `.env`:
-
-```
+Then configure your `.env` -
 
 SFTP_HOST=sftp
 SFTP_PORT=22
@@ -128,11 +126,13 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 PORT=3000
 
-````
+```
+
 Run `npm i`
 Run `npm run build` in the root directory. This will create the dist files which will be used by the docker-compose directly.
 
 Now to start the SFTP Application service -
+
 ```bash
 
 docker-compose -f docker-compose.app.yml up
@@ -140,4 +140,4 @@ docker-compose -f docker-compose.app.yml up
 ## License
 
 MIT
-````
+```
